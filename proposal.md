@@ -1,5 +1,5 @@
 ## PhysicalQt
-------
+
 ### Team name: doktors
 ### Created by: Vijay Rajagopal, Zhenning Yang
 ------
@@ -18,7 +18,10 @@ PhysicalQt's marker of success would be its ability to accurately judge a person
 ### Technology
 PhysicalQt will be mainly relying on Qt5, a C++ powered library, for the GUI and user interaction. The ability to detect if a person’s exercise movement will require a pose estimation model that is able to take in an image frame from a camera, compute the general pose of the figure, and output coordinates in 2D space. All of this has to happen in real time to provide the best user experience. A couple of models could have the ability to this; some of these models include [PoseNet](https://www.tensorflow.org/lite/models/pose_estimation/overview), a 2015 neural network able to run with low inference speed and average accuracy, and [OpenPose](https://github.com/tensorlayer/openpose-plus), a similar neural network that can achieve higher accuracy but with a lower inference speed versus PoseNet. Both of these networks are written in Python with a library called Tensorflow, but due to the conflicting performance of Python and C++ programs, these models can be called with a Tensorflow C++ API for a performance boost.
 
-![image showing a lady moving around and a blue skeleton moving with her](https://www.tensorflow.org/images/lite/models/pose_estimation.gif "PoseNet Example running on TF JS")
+<p align="center">
+  <img width="200" height="200" src="https://www.tensorflow.org/images/lite/models/pose_estimation.gif" alt="image showing a lady moving around and a blue skeleton moving with her">
+</p>
+<p align="center"><i>PoseNet in action</i></p>
 
 ### Roles
 Both Zhenning and Vijay have extensive experience in both Python and C++ as well as experience in other applications of Tensorflow that could help in implementing the models needed for pose estimation. Due to this, we can swap responsibilities with regarding implementing both the GUI-logic and other main components of the software. Regardless, for the sake of simplicity, we are planning on having Zhenning work on implementing the main portions of the GUI/UX as well as help with the logic required in determining the “correctness” of a movement. Vijay will be mainly focusing on getting the GUI interconnected with a pose estimation model, contribute towards the aforementioned logic, and refining the GUI styling. 
