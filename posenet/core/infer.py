@@ -3,6 +3,7 @@ import cv2
 import time
 import os
 import net as posenet
+import utils
 
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
@@ -31,8 +32,6 @@ def infer(imgMatrix):
             min_pose_score = 0.0)
     keypoint_coords *= output_scale
 
-    #print("Drawing out...")
-    #print(pose_scores.shape, keypoint_scores.shape, keypoint_coords.shape)
     '''
     draw_image = posenet.draw_skel_and_kp(
             draw_image, pose_scores, keypoint_scores, keypoint_coords,
@@ -40,8 +39,8 @@ def infer(imgMatrix):
     '''
     #cv2.imwrite(os.path.join("./output", os.path.relpath(imgPath, "./images")), draw_image)
     #cv2.imwrite('./output/demo1.jpg', draw_image)
-    cv2.imshow("fasf", draw_image)
-    cv2.waitKey(10)
+    #cv2.imshow("fasf", draw_image)
+    #cv2.waitKey(10)
 
     '''
     print("Results for image: %s" % imgPath)
@@ -53,11 +52,11 @@ def infer(imgMatrix):
             print('Keypoint %s, score = %f, coord = %s' %
                   (posenet.PART_NAMES[ki], s, c))
     '''
-    return (pose_scores, keypoint_scores, keypoint_coords)
+    return (1, keypoint_scores, keypoint_coords)
 
 if __name__ == "__main__":
     #img = cv2.imread('./images/demo1.jpg')
     #infer("./images/demo1.jpg")
     img = cv2.imread("./images/demo1.jpg")
-    print(img)
-    infer(img)
+    output = infer(img)
+    utils.generateGT(output)
