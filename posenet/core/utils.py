@@ -7,7 +7,8 @@ def generateGT(poseMasterObj, exerciseName, exerciseID, meta=None):
     masterOut = []
     with open("%s_%s.json"%(exerciseName, exerciseID), 'w') as jsonFile:
         if(meta != None):
-            jsonFile.write(json.dumps({'meta':meta}, indent=4))
+            trueMeta = {'meta': meta}
+            masterOut.append(trueMeta)
         else:
             print("Warning! You are creating an exercise without metadata. There might be problems later on when you are parsing this exercise!")
 
