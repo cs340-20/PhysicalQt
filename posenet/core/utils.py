@@ -22,5 +22,17 @@ def generateGT(poseMasterObj, exerciseName, exerciseID, meta=None):
         jsonOutput = json.dumps(masterOut, indent=4)
         jsonFile.write(jsonOutput) 
 
-def compare():
-    return 0
+def packageCoordinateSet(rawCoordScores, rawCoordPoints):
+    setmate = {}
+    for part in range(len(constants.PART_NAMES)):
+        setmate[constants.PART_NAMES[part]] = (rawCoordScores[0,part], rawCoordPoints[0, part, :])
+    return setmate
+
+def packageCoordinateSetNormalized(rawCoordScores, rawCoordPoints, image_size):
+    #image_size = (width, height)
+    width, height = image_size[0], image_size[1]
+    setmate = packageCoordinateSet(rawCoordScores, rawCoordPoints)
+    newmate = {}
+    for part in setmate.items():
+        newmate[part[0]] = (-1, part[1][0], [part[1][1][0]/width, part[1][1][1]/height])
+    return newmate
