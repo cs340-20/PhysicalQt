@@ -36,3 +36,29 @@ def packageCoordinateSetNormalized(rawCoordScores, rawCoordPoints, image_size):
     for part in setmate.items():
         newmate[part[0]] = (-1, part[1][0], [part[1][1][0]/width, part[1][1][1]/height])
     return newmate
+
+def gen_bounding_box(frame):
+    # find (highest x, lowest y)
+    # find (lowest x, highest y)
+    h_x, h_y, l_x, l_y = 0,0,1000,1000
+    for joint in frame.items():
+        coord = joint[1][2]
+        if(coord[0] >= h_x):
+            h_x = coord[0]
+        if(coord[0] <= l_x):
+            l_x = coord[0]
+        if(coord[1] >= h_y):
+            h_y = coord[1]
+        if(coord[1] <= l_y):
+            l_y = coord[1]
+
+    return [(h_x,l_y),(l_x,h_y)]
+
+def circle_equation(x,y,radius, x_offset, y_offset):
+    output_val = (x-x_offset)**2+(y-y_offset)**2
+    if(output_val <= radius):
+        return True
+    else:
+        return False
+
+

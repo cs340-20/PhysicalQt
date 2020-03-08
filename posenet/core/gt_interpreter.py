@@ -3,7 +3,7 @@ import os
 import numpy as np
 import cv2
 import math
-from utils import packageCoordinateSet, packageCoordinateSetNormalized 
+from utils import packageCoordinateSet, packageCoordinateSetNormalized, circle_equation
 
 pqLastGoodFrame = 0
 
@@ -39,7 +39,7 @@ def average_pose(gt_frame, exercise_name):
 
 def evaluate(input_frame, avg_gt):
     # single tolerance for each joint (change later for more specific tolerance load
-    tolerance = 0.1
+    tol_rad = 0.1
    
     # pathway of determining correctness in user 
     # run each frame and analyze each joint:
@@ -50,13 +50,13 @@ def evaluate(input_frame, avg_gt):
     # assuming input_frame: {jointName: [COORD], jointName2: [COORD], ...}
     for joint in avg_gt.items(): 
         # tolerance computation
-        print(joint[0])
         coord = joint[1][2]
-        print(coord)
-        coord_input = input_frame[joint[0]]
-        print(coord_input)
-        distance = math.sqrt((coord_input[0]-coord[0])**2+(coord_input[1]-coord[1])**2)
-        print(distance)
+        coord_input = input_frame[joint[0]][2]
+        distance = math.sqrt(((coord_input[0]-coord[0])**2)+((coord_input[1]-coord[1]))**2)
+        if(circle_equation(coord_input[0], coord_input[1], tol_rad, coord[0], coord[1])):
+            print("good")
+        #print("joint: %s coord: %f %f coord_input: %f %f distance: %f"%(joint[0], coord[0], coord[1], coord_input[0], coord_input[1], distance))
+        print("joint: %s distance: %f"%(joint[0], distance))
     return 0
 
 def display_frame(frame, tolerance=0.1, waittime=100):
@@ -80,7 +80,6 @@ def display_compare(frame1, frame2, tolerance=0.1, waittime=100):
     
     for joint2 in frame2.items():
         true_size = (int(joint2[1][2][1]*(side/2)), int(joint2[1][2][0]*(side/2))+int(side/2))
-        print(true_size)
         cv2.circle(base_image, true_size, 3, (255,255,255))
     cv2.imshow("fasf", base_image)
     cv2.waitKey(waittime)
@@ -90,7 +89,7 @@ if __name__ == '__main__':
     # read_in_gt kept in list for future stacking of diff video frames
     # averaging positions too hard due to difference in positions
     # choosing best single GT right now:
-    gt_master, meta = read_in_gt('jumping_jack_02.json')
+    gt_master, meta = read_in_gt('../gt/jumping_jack/jumping_jack_02.json')
     #average_pose(gt_master, 'jumping_jack')
     
     test_infer = cv2.imread('../gt/jumping_jack/01_infer_test.jpg')
@@ -99,8 +98,8 @@ if __name__ == '__main__':
     _, scores, coord = infer(test_infer)
      
     test = packageCoordinateSetNormalized(scores, coord, (test_infer.shape))
-    evaluate(test, gt_master[0][0])
-    
+    #evaluate(test, gt_master[0][0])
+    #evaluate(test, test)
     # determine total pose range:
     '''
     for gt_f in gt_master:
