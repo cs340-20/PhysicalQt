@@ -4,6 +4,7 @@ import numpy as np
 import cv2
 import math
 from utils import packageCoordinateSet, packageCoordinateSetNormalized, circle_equation
+from net import constants
 
 pqLastGoodFrame = 0
 
@@ -37,10 +38,13 @@ def average_pose(gt_frame, exercise_name):
                 gt[x][2][0] = gt[x][2][0]/meta_blocks[z]['meta']['size'][0]
                 gt[x][2][1] = gt[x][2][1]/meta_blocks[z]['meta']['size'][1]
 
-def evaluate(input_frame, avg_gt):
+def evaluate(input_frame, avg_gt, threshold=len(constants.PART_NAMES)-5):
     # single tolerance for each joint (change later for more specific tolerance load
-    tol_rad = 0.1
-   
+    tol_rad = 0.02
+    total_score = 0
+    total_parts = len(constants.PART_NAMES)
+    achieve_score = threshold/total_parts
+
     # pathway of determining correctness in user 
     # run each frame and analyze each joint:
     # determine radius of tolerance for each joint
@@ -48,39 +52,54 @@ def evaluate(input_frame, avg_gt):
     # if majority of joints are in position it is accepted
     # maybe have prioritized joints in some positions (gt have to be modified)
     # assuming input_frame: {jointName: [COORD], jointName2: [COORD], ...}
+    
     for joint in avg_gt.items(): 
         # tolerance computation
         coord = joint[1][2]
         coord_input = input_frame[joint[0]][2]
-        distance = math.sqrt(((coord_input[0]-coord[0])**2)+((coord_input[1]-coord[1]))**2)
-        if(circle_equation(coord_input[0], coord_input[1], tol_rad, coord[0], coord[1])):
-            print("good")
-        #print("joint: %s coord: %f %f coord_input: %f %f distance: %f"%(joint[0], coord[0], coord[1], coord_input[0], coord_input[1], distance))
-        print("joint: %s distance: %f"%(joint[0], distance))
-    return 0
+        distance = math.sqrt(((coord_input[0]-coord[0])**2)+((coord_input[1]-coord[1])**2))
+        #print(distance)
+        #if(circle_equation(coord_input[0], coord_input[1], tol_rad, coord[0], coord[1], name=joint[0])):
+        if distance <= tol_rad:
+            total_score += 1 
 
-def display_frame(frame, tolerance=0.1, waittime=100):
+    print(total_score)
+    if total_score/total_parts > achieve_score:
+        return 1
+    else:
+        return 0
+
+def display_frame(frame, tolerance=0.025, waittime=100):
     # assume tolerance is single digit for right now:
     side = 500
-    base_image = np.zeros((side,side), np.uint8)
+    base_image = np.zeros((side,side, 3))
     for joint in frame.items():
         true_size = (int(joint[1][2][1]*(side/2)), int(joint[1][2][0]*(side/2))+int(side/2))
-        cv2.circle(base_image, true_size, 3, (255,255,255))
+        cv2.circle(base_image, true_size, 3, (255,255,255)) 
+        cv2.circle(base_image, true_size, int(side*tolerance), (0,255,0), 1)
     cv2.imshow("fasfa", base_image)
     cv2.waitKey(waittime)
 
 
-def display_compare(frame1, frame2, tolerance=0.1, waittime=100):
+def display_compare(frame1, frame2, tolerance=0.025, waittime=100):
     # assume tolerance is single digit for right now:
     side = 500
-    base_image = np.zeros((side,side), np.uint8)
+    base_image = np.zeros((side,side,3))
     for joint in frame1.items():
+       # if(joint[0] == 'leftWrist'):
         true_size = (int(joint[1][2][1]*(side/2)), int(joint[1][2][0]*(side/2))+int(side/2))
-        cv2.circle(base_image, true_size, 3, (255,255,255))
-    
+        cv2.circle(base_image, true_size, 3, (255,255,255), -1)
+        #print(joint[0], true_size)
+            #break
+    print("-------")
     for joint2 in frame2.items():
+       # if(joint2[0] == 'leftWrist'):
         true_size = (int(joint2[1][2][1]*(side/2)), int(joint2[1][2][0]*(side/2))+int(side/2))
-        cv2.circle(base_image, true_size, 3, (255,255,255))
+        cv2.circle(base_image, true_size, 3, (0,0,255), -1)
+        cv2.circle(base_image, true_size, int(side*tolerance), (0,255,0), 1)    
+        #print(joint2[0], true_size)
+            #break
+
     cv2.imshow("fasf", base_image)
     cv2.waitKey(waittime)
 
@@ -98,8 +117,11 @@ if __name__ == '__main__':
     _, scores, coord = infer(test_infer)
      
     test = packageCoordinateSetNormalized(scores, coord, (test_infer.shape))
-    #evaluate(test, gt_master[0][0])
-    #evaluate(test, test)
+    #print(evaluate(test, gt_master[0][0]))
+    
+    for i in range(len(gt_master[0])):
+        print(evaluate(gt_master[0][0], gt_master[0][i]))
+        display_compare(gt_master[0][0], gt_master[0][i], waittime=-1)
     # determine total pose range:
     '''
     for gt_f in gt_master:
@@ -108,4 +130,3 @@ if __name__ == '__main__':
     '''
 
     #display_frame(gt_master[0][0], waittime=10000)
-    display_compare(gt_master[0][0], test, waittime=10000)

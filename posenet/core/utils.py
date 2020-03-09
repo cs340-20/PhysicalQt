@@ -54,9 +54,10 @@ def gen_bounding_box(frame):
 
     return [(h_x,l_y),(l_x,h_y)]
 
-def circle_equation(x,y,radius, x_offset, y_offset):
-    output_val = (x-x_offset)**2+(y-y_offset)**2
-    if(output_val <= radius):
+def circle_equation(x,y,radius, x_offset, y_offset, name=""):
+    output_val = ((x-x_offset)**2)+((y-y_offset)**2)
+    print("try radius: ", name, output_val, radius**2, output_val <= radius**2)
+    if(output_val <= (radius**2)):
         return True
     else:
         return False
