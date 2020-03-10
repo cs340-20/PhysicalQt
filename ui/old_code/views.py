@@ -1,5 +1,7 @@
 import numpy as np
 
+from PyQt5 import QtCore, QtGui, QtWidgets
+
 from PyQt5.QtCore import Qt, QThread, QTimer
 from PyQt5.QtWidgets import QMainWindow, QWidget, QPushButton, QVBoxLayout, QApplication, QSlider
 from pyqtgraph import ImageView
@@ -14,6 +16,7 @@ class StartWindow(QMainWindow):
         self.button_frame = QPushButton('Acquire Frame', self.central_widget)
         self.button_movie = QPushButton('Start Movie', self.central_widget)
         self.image_view = ImageView()
+        self.image_view.setGeometry(QtCore.QRect(40, 60, 421, 311))
         self.slider = QSlider(Qt.Horizontal)
         self.slider.setRange(0,10)
 
