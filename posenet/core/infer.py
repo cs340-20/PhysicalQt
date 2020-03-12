@@ -9,7 +9,13 @@ config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
 sess = tf.Session(config=config)
 
-model_cfg, model_outputs = posenet.load_model(101, sess)
+try:
+    os.getcwd().index('posenet')
+    posenet_path = './_models/model-mobilenet_v1_101.pb'
+except Exception as e:
+    posenet_path = '../posenet/core/_models/model-mobilenet_v1_101.pb'
+
+model_cfg, model_outputs = posenet.simple_load_model(posenet_path, sess)
 output_stride = model_cfg['output_stride']
 
 #def infer(imgPath):
