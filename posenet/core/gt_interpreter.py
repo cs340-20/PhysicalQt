@@ -63,7 +63,7 @@ def evaluate(input_frame, avg_gt, threshold=len(constants.PART_NAMES)-5):
         if distance <= tol_rad:
             total_score += 1 
 
-    print(total_score)
+    #print("total joint score: ", total_score)
     if total_score/total_parts > achieve_score:
         return 1
     else:
@@ -120,7 +120,7 @@ if __name__ == '__main__':
     #print(evaluate(test, gt_master[0][0]))
     
     for i in range(len(gt_master[0])):
-        print(evaluate(gt_master[0][0], gt_master[0][i]))
+        print('output result (0 - reject; 1 - accept):', evaluate(gt_master[0][0], gt_master[0][i]))
         display_compare(gt_master[0][0], gt_master[0][i], waittime=-1)
     # determine total pose range:
     '''
