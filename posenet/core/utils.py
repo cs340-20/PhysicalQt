@@ -38,22 +38,24 @@ def packageCoordinateSetNormalized(rawCoordScores, rawCoordPoints, image_size):
     return newmate
 
 def gen_bounding_box(frame, ratio_w=1, ratio_h=1):
-    # find (highest x, lowest y)
-    # find (lowest x, highest y)
-    h_x, h_y, l_x, l_y = 0,0,1000,1000
+    l_x, l_y, s_x, s_y = 0,0,1_000_000, 1_000_000
+    
     for joint in frame.items():
+        print(joint)
         coord = joint[1][2]
-        if(coord[0] >= h_x):
-            h_x = coord[0]*ratio_w
-        if(coord[0] <= l_x):
-            l_x = coord[0]*ratio_w
-        if(coord[1] >= h_y):
-            h_y = coord[1]*ratio_h
-        if(coord[1] <= l_y):
-            l_y = coord[1]*ratio_h
+        print(coord)
+        if l_x < coord[0]:
+            l_x = coord[0]
+        if l_y < coord[1]:
+            l_y = coord[1]
+        if s_x > coord[0]:
+            s_x = coord[0]
+        if s_y > coord[1]:
+            s_y = coord[1]
 
-    return [(l_x,l_y),(h_x,h_y)]
-
+    print(s_x, l_x, s_y, l_y)
+    return [(s_x*ratio_w, s_y*ratio_h), (l_x*ratio_w, l_y*ratio_h)]
+    
 def circle_equation(x,y,radius, x_offset, y_offset, name=""):
     output_val = ((x-x_offset)**2)+((y-y_offset)**2)
     print("try radius: ", name, output_val, radius**2, output_val <= radius**2)

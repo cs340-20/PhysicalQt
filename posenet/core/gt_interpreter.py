@@ -3,7 +3,7 @@ import os
 import numpy as np
 import cv2
 import math
-from utils import packageCoordinateSet, packageCoordinateSetNormalized, circle_equation
+from utils import packageCoordinateSet, packageCoordinateSetNormalized, circle_equation, gen_bounding_box
 from net import constants
 
 pqLastGoodFrame = 0
@@ -81,7 +81,7 @@ def display_frame(frame, tolerance=0.025, waittime=100):
     cv2.waitKey(waittime)
 
 
-def display_compare(frame1, frame2, tolerance=0.025, waittime=100):
+def display_compare(frame1, frame2, tolerance=0.025, waittime=1000):
     # assume tolerance is single digit for right now:
     side = 500
     base_image = np.zeros((side,side,3))
@@ -89,6 +89,7 @@ def display_compare(frame1, frame2, tolerance=0.025, waittime=100):
        # if(joint[0] == 'leftWrist'):
         true_size = (int(joint[1][2][1]*(side/2)), int(joint[1][2][0]*(side/2))+int(side/2))
         cv2.circle(base_image, true_size, 3, (255,255,255), -1)
+        
         #print(joint[0], true_size)
             #break
     print("-------")
@@ -99,7 +100,9 @@ def display_compare(frame1, frame2, tolerance=0.025, waittime=100):
         cv2.circle(base_image, true_size, int(side*tolerance), (0,255,0), 1)    
         #print(joint2[0], true_size)
             #break
-
+    bbox = gen_bounding_box(frame2, ratio_w=1, ratio_h=1)
+    print(bbox)
+    cv2.rectangle(base_image, (int(bbox[0][1]*(side/2)), int(bbox[0][0]*(side/2))+int(side/2)), (int(bbox[1][1]*(side/2)), int(bbox[1][0]*(side/2))+int(side/2)), (0,0,255), 1)
     cv2.imshow("fasf", base_image)
     cv2.waitKey(waittime)
 
