@@ -64,6 +64,12 @@ def circle_equation(x,y,radius, x_offset, y_offset, name=""):
     else:
         return False
 
+def normalization_shift(coordinate, side_x, side_y):
+    return (int(coordinate[1]*(side_x/1.5)), int(coordinate[0]*(side_y/1.5))+int(side_y/1.5))
+
+def normalization_fix(coordinate, side_x, side_y):
+    return (int(coordinate[1]*(side_x/2)), int(coordinate[0]*(side_y/2))+int(side_y/2))
+
 # use with gen_bounding_box:
 def get_bbx_size(coord_box):
     l_x, l_y = coord_box[0]
@@ -71,3 +77,40 @@ def get_bbx_size(coord_box):
     # (w,h)
     return (int(h_x-l_x), int(h_y-l_y))
 
+# fix the scaling issue based on bounding box:
+def fix_pose(bbox1, bbox2, pose):
+    # bbox1 -> box 
+    return 0
+
+def bind_pose_loc(pose1, pose2):
+    # transformation of pose2 to anchor at pose1's [tbd joint]
+    # i'm thinking left ankle
+    p1_left_ankle = pose1['leftAnkle']
+    p2_left_ankle = pose2['leftAnkle']
+    init_dist_x = p1_left_ankle[2][0] - p2_left_ankle[2][0]
+    init_dist_y = p1_left_ankle[2][1] - p2_left_ankle[2][1]
+
+    # get offsets based on p2_left_ankle
+    # offset - {'joint_name': [x_offset, y_offset]}
+    offsets = {joint[0]:[p2_left_ankle[2][0]-joint[1][2][0], p2_left_ankle[2][1]-joint[1][2][1]] for joint in pose2.items()}
+    
+    # change joints based on offsets:
+    # set pose2's left ankle to pose1's
+    #pose2['leftAnkle'][2] = pose1['leftAnkle'][2]
+
+    export_pose2 = dict()
+
+    for offset in offsets.items():
+        #print(offset)
+        #print(pose2[offset[0]][0], pose2[offset[0]][1], p1_left_ankle[2][0])
+        export_pose2[offset[0]] = [
+                    pose2[offset[0]][0],
+                    pose2[offset[0]][1],
+                    [
+                        p1_left_ankle[2][0]-offset[1][0],
+                        p1_left_ankle[2][1]-offset[1][1]
+                    ]
+                ]
+
+    print(export_pose2)
+    return export_pose2

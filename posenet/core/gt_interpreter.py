@@ -3,10 +3,11 @@ import os
 import numpy as np
 import cv2
 import math
-from utils import packageCoordinateSet, packageCoordinateSetNormalized, circle_equation, gen_bounding_box
+from utils import packageCoordinateSet, packageCoordinateSetNormalized, circle_equation, gen_bounding_box, normalization_fix, bind_pose_loc
 from net import constants
 
 pqLastGoodFrame = 0
+pqSeekingFrame = 10 # look last 10 frames to determine evaluation
 
 def read_in_gt(jsonFilename, root="./"):
     with open(os.path.join(root, jsonFilename), 'r') as jsonFile:
@@ -21,8 +22,8 @@ def read_in_gt(jsonFilename, root="./"):
     for z in range(len(gtJSON)):
         for gt in gtJSON[z]:
             for x,y in gt.items():
-                gt[x][2][0] = gt[x][2][0]/meta_blocks[z]['meta']['size'][0]
-                gt[x][2][1] = gt[x][2][1]/meta_blocks[z]['meta']['size'][1]
+                gt[x][2][0] = gt[x][2][0]/meta_blocks[z]['meta']['size'][1]
+                gt[x][2][1] = gt[x][2][1]/meta_blocks[z]['meta']['size'][0]
     
     return gtJSON, meta_blocks
 
@@ -74,35 +75,28 @@ def display_frame(frame, tolerance=0.025, waittime=100):
     side = 500
     base_image = np.zeros((side,side, 3))
     for joint in frame.items():
-        true_size = (int(joint[1][2][1]*(side/2)), int(joint[1][2][0]*(side/2))+int(side/2))
+        true_size = normalization_fix(joint[1][2], side, side) 
         cv2.circle(base_image, true_size, 3, (255,255,255)) 
         cv2.circle(base_image, true_size, int(side*tolerance), (0,255,0), 1)
     cv2.imshow("fasfa", base_image)
     cv2.waitKey(waittime)
-
 
 def display_compare(frame1, frame2, tolerance=0.025, waittime=1000):
     # assume tolerance is single digit for right now:
     side = 500
     base_image = np.zeros((side,side,3))
     for joint in frame1.items():
-       # if(joint[0] == 'leftWrist'):
-        true_size = (int(joint[1][2][1]*(side/2)), int(joint[1][2][0]*(side/2))+int(side/2))
+        true_size = normalization_fix(joint[1][2], side, side) 
         cv2.circle(base_image, true_size, 3, (255,255,255), -1)
-        
-        #print(joint[0], true_size)
-            #break
     print("-------")
+
     for joint2 in frame2.items():
-       # if(joint2[0] == 'leftWrist'):
-        true_size = (int(joint2[1][2][1]*(side/2)), int(joint2[1][2][0]*(side/2))+int(side/2))
+        true_size = normalization_fix(joint2[1][2], side, side)
         cv2.circle(base_image, true_size, 3, (0,0,255), -1)
         cv2.circle(base_image, true_size, int(side*tolerance), (0,255,0), 1)    
-        #print(joint2[0], true_size)
-            #break
+
     bbox = gen_bounding_box(frame2, ratio_w=1, ratio_h=1)
-    print(bbox)
-    cv2.rectangle(base_image, (int(bbox[0][1]*(side/2)), int(bbox[0][0]*(side/2))+int(side/2)), (int(bbox[1][1]*(side/2)), int(bbox[1][0]*(side/2))+int(side/2)), (0,0,255), 1)
+    cv2.rectangle(base_image, normalization_fix(bbox[0], side, side), normalization_fix(bbox[1], side, side), (0,0,255), 1)
     cv2.imshow("fasf", base_image)
     cv2.waitKey(waittime)
 
@@ -112,7 +106,7 @@ if __name__ == '__main__':
     # averaging positions too hard due to difference in positions
     # choosing best single GT right now:
     gt_master, meta = read_in_gt('../gt/jumping_jack/jumping_jack_02.json')
-    #average_pose(gt_master, 'jumping_jack')
+    gt_master2, meta2 = read_in_gt('../gt/jumping_jack/jumping_jack_01.json')
     
     test_infer = cv2.imread('../gt/jumping_jack/01_infer_test.jpg')
     print("Running with shape", test_infer.shape)
@@ -120,11 +114,17 @@ if __name__ == '__main__':
     _, scores, coord = infer(test_infer)
      
     test = packageCoordinateSetNormalized(scores, coord, (test_infer.shape))
-    #print(evaluate(test, gt_master[0][0]))
     
+    '''
     for i in range(len(gt_master[0])):
         print('output result (0 - reject; 1 - accept):', evaluate(gt_master[0][0], gt_master[0][i]))
-        display_compare(gt_master[0][0], gt_master[0][i], waittime=-1)
+    '''
+    #display_compare(gt_master[0][0], gt_master[0][10], waittime=-1)
+    display_frame(gt_master2[0][0], waittime=-1)
+    display_compare(gt_master[0][0], gt_master[0][10], waittime=-1)
+    _out = bind_pose_loc(gt_master[0][0],gt_master[0][10])
+    print(_out)
+    display_frame(_out, waittime=-1)
     # determine total pose range:
     '''
     for gt_f in gt_master:
