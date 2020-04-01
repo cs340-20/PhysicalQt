@@ -23,6 +23,20 @@ def video_parse(videoPath, exerciseName, idName):
             break
     utils.generateGT(vidData, exerciseName, idName, meta=vidMeta)
 
+def image_parse(imagePath, exerciseName, idName):
+    img = cv2.imread(imagePath)
+    imgData = []
+    frame_count = 1
+    duration = 1
+    imgMeta = {'total_frames': frame_count, 'length': duration, 'size': (img.shape[1], img.shape[0])}
+    print(imgMeta) 
+    _, key_coor, key_conf = infer(img)
+    imgData.append((1, key_coor, key_conf))
+    utils.generateGT(imgData, "%s_img"%exerciseName, idName, meta=imgMeta)
+
+
 if __name__ == '__main__':
-    video_parse('../gt/jumping_jack/01edit.mp4', 'jumping_jack', '01')
-    video_parse('../gt/jumping_jack/02edit.mp4', 'jumping_jack', '02')
+    #video_parse('../gt/jumping_jack/01edit.mp4', 'jumping_jack', '01')
+    #video_parse('../gt/jumping_jack/02edit.mp4', 'jumping_jack', '02')
+    #image_parse('../gt/jumping_jack/02_infer_test.jpg', 'jumping_jack', '02')
+    image_parse('../gt/jumping_jack/03_infer_test.jpg', 'jumping_jack', '03')

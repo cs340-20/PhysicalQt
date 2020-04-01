@@ -10,7 +10,7 @@ import gt_interpreter as gt
 import infer
 from utils import packageCoordinateSetNormalized, gen_bounding_box, get_bbx_size
 
-class DetectionWidget(QWidget):
+class DetectionWidget(QWidget, QRunnable):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.pose_output = QImage()
@@ -23,6 +23,7 @@ class DetectionWidget(QWidget):
         self.current_pose = _out
         return _out
 
+    @pyqtSlot()
     def gen_data(self, new_img_w, new_img_h, img, gt_item=None):
         # replace late if detect_pose isn't needed:
         # _, scores, coord = infer(img)
@@ -60,8 +61,9 @@ class DetectionWidget(QWidget):
         return image
 
 class MainWindow(QWidget):
-    def __init__(self, camera_index=0, fps=30):
+    def __init__(self, camera_index=0, fps=24):
         super().__init__()
+        self.threadpool = QThreadPool()
         self.setFixedSize(900, 500)
         #self.setFixedSize(1050, 800)
         self.setWindowTitle('PhysicalQt')
@@ -75,6 +77,7 @@ class MainWindow(QWidget):
         self.image2.setGeometry(QRect(550, 35, 300, 300))
 
         self.detectWidget = DetectionWidget() 
+        self.threadpool.start(self.detectWidget)
         # load gt file manually here:
         self.gt_master, self.meta = gt.read_in_gt('../posenet/gt/jumping_jack/jumping_jack_02.json')
         #print(self.meta[0]['meta'])
@@ -97,29 +100,30 @@ class MainWindow(QWidget):
         self.startb.setGeometry(QRect(50, 350, 150, 60))
         self.end = QPushButton("end", self)
         self.end.setGeometry(QRect(200, 350, 150, 60))
-
+        
         timer = QTimer(self)
         timer.setInterval(int(1000/fps))
         timer.timeout.connect(self.get_frame)
         timer.start()
+        
 
     def get_frame(self):
         _, frame = self.capture.read()
         
-        self.detectWidget.lastGoodFrame = (self.detectWidget.lastGoodFrame + 1) % self.meta[0]['meta']['total_frames']
+        #self.detectWidget.lastGoodFrame = (self.detectWidget.lastGoodFrame + 1) % self.meta[0]['meta']['total_frames']
         
-        self.detectWidget.gen_data(300,300,frame, gt_item=self.gt_master[0])
+        #self.detectWidget.gen_data(300,300,frame, gt_item=self.gt_master[0])
 
         # Continously check pose:
-        for i in range(len(self.gt_master[0])):
-            gt.evaluate(self.detectWidget.current_pose, self.gt_master[0][i])
+        #for i in range(len(self.gt_master[0])):
+        #    gt.evaluate(self.detectWidget.current_pose, self.gt_master[0][i])
 
         image = QImage(frame, *frame.shape[1::-1], QImage.Format_RGB888).rgbSwapped()
         pixmap = QPixmap.fromImage(image)
         self.image.setPixmap(pixmap)
         self.image.setScaledContents(True)
         
-        self.image2.setPixmap(QPixmap.fromImage(self.detectWidget.pose_output))
+        #self.image2.setPixmap(QPixmap.fromImage(self.detectWidget.pose_output))
         self.image2.setScaledContents(True)
 
 app = QApplication([])

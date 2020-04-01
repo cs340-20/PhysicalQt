@@ -3,7 +3,7 @@ import os
 import numpy as np
 import cv2
 import math
-from utils import packageCoordinateSet, packageCoordinateSetNormalized, circle_equation, gen_bounding_box, normalization_fix, bind_pose_loc
+from utils import packageCoordinateSet, packageCoordinateSetNormalized, circle_equation, gen_bounding_box, normalization_fix, bind_pose_loc, scale_pose
 from net import constants
 
 pqLastGoodFrame = 0
@@ -78,6 +78,8 @@ def display_frame(frame, tolerance=0.025, waittime=100):
         true_size = normalization_fix(joint[1][2], side, side) 
         cv2.circle(base_image, true_size, 3, (255,255,255)) 
         cv2.circle(base_image, true_size, int(side*tolerance), (0,255,0), 1)
+    bbox = gen_bounding_box(frame, ratio_w=1, ratio_h=1)
+    cv2.rectangle(base_image, normalization_fix(bbox[0], side, side), normalization_fix(bbox[1], side, side), (0,0,255), 1)
     cv2.imshow("fasfa", base_image)
     cv2.waitKey(waittime)
 
@@ -106,14 +108,9 @@ if __name__ == '__main__':
     # averaging positions too hard due to difference in positions
     # choosing best single GT right now:
     gt_master, meta = read_in_gt('../gt/jumping_jack/jumping_jack_02.json')
-    gt_master2, meta2 = read_in_gt('../gt/jumping_jack/jumping_jack_01.json')
-    
-    test_infer = cv2.imread('../gt/jumping_jack/01_infer_test.jpg')
-    print("Running with shape", test_infer.shape)
-    from infer import infer
-    _, scores, coord = infer(test_infer)
-     
-    test = packageCoordinateSetNormalized(scores, coord, (test_infer.shape))
+    gt_master2, meta2 = read_in_gt('../gt/jumping_jack/jumping_jack_img_03.json')
+
+    #test = packageCoordinateSetNormalized(scores, coord, (test_infer.shape))
     
     '''
     for i in range(len(gt_master[0])):
@@ -121,10 +118,11 @@ if __name__ == '__main__':
     '''
     #display_compare(gt_master[0][0], gt_master[0][10], waittime=-1)
     display_frame(gt_master2[0][0], waittime=-1)
-    display_compare(gt_master[0][0], gt_master[0][10], waittime=-1)
-    _out = bind_pose_loc(gt_master[0][0],gt_master[0][10])
-    print(_out)
+    display_frame(gt_master[0][0], waittime=-1)
+    scale_pose(gen_bounding_box(gt_master[0][0]), gen_bounding_box(gt_master2[0][0]), gt_master[0][0], gt_master2[0][0])
+    _out = bind_pose_loc(gt_master[0][0],gt_master2[0][0])
     display_frame(_out, waittime=-1)
+    #display_frame(_out2, waittime=-1)
     # determine total pose range:
     '''
     for gt_f in gt_master:

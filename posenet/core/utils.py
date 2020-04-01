@@ -2,6 +2,7 @@ import numpy as np
 import csv
 from net import constants
 import json
+import math
 
 def generateGT(poseMasterObj, exerciseName, exerciseID, meta=None):
     masterOut = []
@@ -37,13 +38,11 @@ def packageCoordinateSetNormalized(rawCoordScores, rawCoordPoints, image_size):
         newmate[part[0]] = (-1, part[1][0], [part[1][1][0]/width, part[1][1][1]/height])
     return newmate
 
-def gen_bounding_box(frame, ratio_w=1, ratio_h=1):
+def gen_bounding_box(frame, ratio_w=1, ratio_h=1, raw=False):
     l_x, l_y, s_x, s_y = 0,0,1_000_000, 1_000_000
     
     for joint in frame.items():
-        print(joint)
         coord = joint[1][2]
-        print(coord)
         if l_x < coord[0]:
             l_x = coord[0]
         if l_y < coord[1]:
@@ -53,8 +52,10 @@ def gen_bounding_box(frame, ratio_w=1, ratio_h=1):
         if s_y > coord[1]:
             s_y = coord[1]
 
-    print(s_x, l_x, s_y, l_y)
-    return [(s_x*ratio_w, s_y*ratio_h), (l_x*ratio_w, l_y*ratio_h)]
+    if raw:
+        return [(s_x, s_y),(l_x, l_y)]
+    else:
+        return [(s_x*ratio_w, s_y*ratio_h), (l_x*ratio_w, l_y*ratio_h)]
     
 def circle_equation(x,y,radius, x_offset, y_offset, name=""):
     output_val = ((x-x_offset)**2)+((y-y_offset)**2)
@@ -77,10 +78,28 @@ def get_bbx_size(coord_box):
     # (w,h)
     return (int(h_x-l_x), int(h_y-l_y))
 
+def get_bbx_diagonal(coord_box):
+    l_x, l_y = coord_box[0]
+    h_x, h_y = coord_box[1]
+    return math.sqrt((h_x-l_x)**2+(h_y-l_y)**2)
+
 # fix the scaling issue based on bounding box:
-def fix_pose(bbox1, bbox2, pose):
-    # bbox1 -> box 
-    return 0
+def scale_pose(bbox1, bbox2, pose1, pose2):
+    # bbox1 -> box
+    # figure out scaling factor:
+    # figure out diagonals of each box and divide bbox2/bbox1:
+    diagonal1 = get_bbx_diagonal(bbox1)
+    diagonal2 = get_bbx_diagonal(bbox2)
+    print("diagonals: ",diagonal1, diagonal2)
+    
+    scale_factor = diagonal1/diagonal2
+    for joint in pose2.items():
+        coord = joint[1][2]
+        #[x, y]
+        _temp = [coord[0]*scale_factor, coord[1]*scale_factor]
+        pose2[joint[0]][2] = _temp
+
+    print("sf", scale_factor)
 
 def bind_pose_loc(pose1, pose2):
     # transformation of pose2 to anchor at pose1's [tbd joint]
@@ -101,8 +120,6 @@ def bind_pose_loc(pose1, pose2):
     export_pose2 = dict()
 
     for offset in offsets.items():
-        #print(offset)
-        #print(pose2[offset[0]][0], pose2[offset[0]][1], p1_left_ankle[2][0])
         export_pose2[offset[0]] = [
                     pose2[offset[0]][0],
                     pose2[offset[0]][1],
@@ -111,6 +128,4 @@ def bind_pose_loc(pose1, pose2):
                         p1_left_ankle[2][1]-offset[1][1]
                     ]
                 ]
-
-    print(export_pose2)
     return export_pose2
