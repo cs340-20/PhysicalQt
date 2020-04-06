@@ -37,7 +37,7 @@ class DetectionWidget(QWidget, QRunnable):
         # replace late if detect_pose isn't needed:
         pose_pack = self.detect_pose(img)
         img_blank = np.full((new_img_w,new_img_h, 3), 239, dtype=np.uint8)
-        
+
         # generate bounding box size to figure out centering:
         #get_bbx_size(gen_bounding_box(pose_pack, ratio_w=new_img_w, ratio_h=new_img_h))
         #coord = gen_bounding_box(pose_pack, ratio_w=new_img_w, ratio_h=new_img_h)
@@ -46,10 +46,10 @@ class DetectionWidget(QWidget, QRunnable):
         if gt_item != None:
             inst_item = gt_item[self.lastGoodFrame]
             for joint in inst_item.items():
-                #true_size = 
+                #true_size =
                 true_size = (int(joint[1][2][1]*(new_img_w/1.5)), int(joint[1][2][0]*(new_img_h/2) + (new_img_h/3)))
                 cv2.circle(img_blank, true_size, 5, (0,0,255), -1)
-    
+
         # draw on blank canvas:
         for joint in pose_pack.items():
             true_size = (int(joint[1][2][1]*(new_img_w)), int(joint[1][2][0]*(new_img_h/2)+(new_img_h/3)))
@@ -68,19 +68,19 @@ class MainWindow(QWidget):
         #self.setFixedSize(1050, 800)
         self.setWindowTitle('PhysicalQt')
         self.capture = cv2.VideoCapture(camera_index)
-        
+
         # template load in:
         static_path = os.path.join(os.getcwd(), 'static')
         self.template_needstart = cv2.imread(os.path.join(static_path, 'template_needstart.png'))
 
         self.image = QLabel(self)
         self.image.setGeometry(QRect(35, 35, 450, 300))
-        
+
         # set location
         self.image2 = QLabel(self)
         self.image2.setGeometry(QRect(550, 35, 300, 300))
 
-        self.detectWidget = DetectionWidget() 
+        self.detectWidget = DetectionWidget()
         #self.threadpool.start(self.detectWidget)
         # load gt file manually here:
         self.gt_master, self.meta = gt.read_in_gt('../posenet/gt/jumping_jack/jumping_jack_02.json')
@@ -89,7 +89,7 @@ class MainWindow(QWidget):
         text.setGeometry(QRect(35, 5, 50, 25))
         text = QLabel('motion', self)
         text.setGeometry(QRect(550, 5, 50, 25))
-        
+
         #layout = QVBoxLayout(self)
         '''
         layout = QHBoxLayout(self)
@@ -112,13 +112,13 @@ class MainWindow(QWidget):
         timer.setInterval(int(1000/fps))
         timer.timeout.connect(self.get_frame)
         timer.start()
-        
+
     def switch_status(self):
         self.mainStatus = not self.mainStatus
 
     def get_frame(self):
         _, frame = self.capture.read()
-        
+
         if self.mainStatus:
             self.detectWidget.lastGoodFrame = (self.detectWidget.lastGoodFrame + 1) % self.meta[0]['meta']['total_frames']
             self.detectWidget.gen_data(300,300,frame, gt_item=self.gt_master[0])
@@ -131,12 +131,12 @@ class MainWindow(QWidget):
         pixmap = QPixmap.fromImage(image)
         self.image.setPixmap(pixmap)
         self.image.setScaledContents(True)
-        
+
         if self.mainStatus:
             self.image2.setPixmap(QPixmap.fromImage(self.detectWidget.pose_output))
         else:
             self.image2.setPixmap(QPixmap.fromImage(get_qimage(self.template_needstart)))
-        
+
         self.image2.setScaledContents(True)
 
 app = QApplication([])
