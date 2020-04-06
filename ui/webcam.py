@@ -4,11 +4,20 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 import sys
 import numpy as np
+import os
 
 sys.path.append('../posenet/core/')
 import gt_interpreter as gt
 import infer
 from utils import packageCoordinateSetNormalized, gen_bounding_box, get_bbx_size
+
+def get_qimage(image):
+    height, width, channels = image.shape
+    bytesPerLine = 3 * width
+    image = QImage(image.data, width, height, bytesPerLine, QImage.Format_RGB888)
+    image = image.rgbSwapped()
+    return image
+
 
 class DetectionWidget(QWidget, QRunnable):
     def __init__(self, parent=None):
@@ -45,17 +54,10 @@ class DetectionWidget(QWidget, QRunnable):
         for joint in pose_pack.items():
             true_size = (int(joint[1][2][1]*(new_img_w)), int(joint[1][2][0]*(new_img_h/2)+(new_img_h/3)))
             cv2.circle(img_blank, true_size, 3, (0,0,0), -1)
-        self.pose_output = self.get_qimage(img_blank)
+        self.pose_output = get_qimage(img_blank)
         if self.pose_output.size() != self.size():
             self.setFixedSize(self.pose_output.size())
         self.update()
-
-    def get_qimage(self, image):
-        height, width, channels = image.shape
-        bytesPerLine = 3 * width
-        image = QImage(image.data, width, height, bytesPerLine, QImage.Format_RGB888)
-        image = image.rgbSwapped()
-        return image
 
 class MainWindow(QWidget):
     def __init__(self, camera_index=0, fps=24):
@@ -66,6 +68,10 @@ class MainWindow(QWidget):
         #self.setFixedSize(1050, 800)
         self.setWindowTitle('PhysicalQt')
         self.capture = cv2.VideoCapture(camera_index)
+        
+        # template load in:
+        static_path = os.path.join(os.getcwd(), 'static')
+        self.template_needstart = cv2.imread(os.path.join(static_path, 'template_needstart.png'))
 
         self.image = QLabel(self)
         self.image.setGeometry(QRect(35, 35, 450, 300))
@@ -126,7 +132,11 @@ class MainWindow(QWidget):
         self.image.setPixmap(pixmap)
         self.image.setScaledContents(True)
         
-        #self.image2.setPixmap(QPixmap.fromImage(self.detectWidget.pose_output))
+        if self.mainStatus:
+            self.image2.setPixmap(QPixmap.fromImage(self.detectWidget.pose_output))
+        else:
+            self.image2.setPixmap(QPixmap.fromImage(get_qimage(self.template_needstart)))
+        
         self.image2.setScaledContents(True)
 
 app = QApplication([])
