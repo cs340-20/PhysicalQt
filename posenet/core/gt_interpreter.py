@@ -109,25 +109,24 @@ if __name__ == '__main__':
     # choosing best single GT right now:
     gt_master, meta = read_in_gt('../gt/jumping_jack/jumping_jack_02.json')
     gt_master2, meta2 = read_in_gt('../gt/jumping_jack/jumping_jack_img_03.json')
-
-    #test = packageCoordinateSetNormalized(scores, coord, (test_infer.shape))
     
     '''
     for i in range(len(gt_master[0])):
         print('output result (0 - reject; 1 - accept):', evaluate(gt_master[0][0], gt_master[0][i]))
     '''
-    #display_compare(gt_master[0][0], gt_master[0][10], waittime=-1)
-    display_frame(gt_master2[0][0], waittime=-1)
-    display_frame(gt_master[0][0], waittime=-1)
+    display_compare(gt_master[0][0], gt_master2[0][0], waittime=-1)
+    #display_frame(gt_master2[0][0], waittime=-1)
+    #display_frame(gt_master[0][0], waittime=-1)
+    
     scale_pose(gen_bounding_box(gt_master[0][0]), gen_bounding_box(gt_master2[0][0]), gt_master[0][0], gt_master2[0][0])
     _out = bind_pose_loc(gt_master[0][0],gt_master2[0][0])
-    display_frame(_out, waittime=-1)
-    #display_frame(_out2, waittime=-1)
+    
+    #display_frame(_out, waittime=-1)
+    display_compare(gt_master[0][0], _out, waittime=-1)
+    display_compare(gt_master[0][0], gt_master2[0][0], waittime=-1)
     # determine total pose range:
     '''
     for gt_f in gt_master:
         for frame in gt_f:
             display_frame(frame)
     '''
-
-    #display_frame(gt_master[0][0], waittime=10000)
