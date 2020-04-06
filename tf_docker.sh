@@ -15,7 +15,7 @@ if [ "$1" = "$run" ]; then
     --gpus all \
     -it --name tf \
     --device=/dev/video0:/dev/video0 \
-    -v ${PWD}:/home \
+    -v ${PWD}:/PhysicalQt \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     -e DISPLAY=unix$DISPLAY \
     tensorflow/tensorflow:1.14.0-gpu-py3 bash
