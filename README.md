@@ -3,7 +3,7 @@
 #### Docker Guide
     docker pull tensorflow/tensorflow
 #### Setup
-    sh tf_docker.sh setup
+    sh tf_webcam_docker.sh setup
 #### Run
     sh tf_docker.sh run
 #### Inside PhysicalQt directory, install required packages
