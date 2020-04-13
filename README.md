@@ -1,7 +1,7 @@
 # **PhysicalQt**
 
 ## Hardware requirements
-- Webcam
+- A webcam
 - A GPU with cuda support
 
 #### Docker Guide
