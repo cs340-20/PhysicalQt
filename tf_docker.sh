@@ -13,7 +13,7 @@ if [ "$1" = "$run" ]; then
   xhost +local:docker
   sudo docker run \
     --gpus all \
-    -it --name tf \
+    -it --name tf-qt \
     --device=/dev/video0:/dev/video0 \
     -v ${PWD}:/PhysicalQt \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
@@ -21,11 +21,11 @@ if [ "$1" = "$run" ]; then
     tensorflow/tensorflow:1.14.0-gpu-py3 bash
 
 elif [ "$1" = "$bash" ]; then
-  sudo docker start tf
-  sudo docker exec -it tf bash
+  sudo docker start tf-qt
+  sudo docker exec -it tf-qt bash
 elif [ "$1" = "$remove" ]; then
-  sudo docker stop tf
-  sudo docker rm tf
+  sudo docker stop tf-qt
+  sudo docker rm tf-qt
 elif [ "$1" = "$fix_gpu_error" ]; then
   # Add the package repositories
   # https://github.com/NVIDIA/nvidia-docker
