@@ -112,7 +112,7 @@ class MainWindow(QWidget):
         self.options = ["jumping jack", "Jump Squat", "Lunge", "Star jumps", "Standing Side Stretch"]
         for op in self.options:
             self.option_menu.addItem(op)
-        self.option_menu.setGeometry(QRect(550, 350, 150, 60))
+        self.option_menu.setGeometry(QRect(350, 350, 150, 60))
 
         timer = QTimer(self)
         timer.setInterval(int(1000/fps))
@@ -151,6 +151,11 @@ class MainWindow(QWidget):
 
         self.image2.setScaledContents(True)
 
+    # destructor
+    def __del__(self):
+        print('free')
+        self.capture.release()
+        cv2.destroyAllWindows()
 
 if __name__ == "__main__":
     app = QApplication([])
