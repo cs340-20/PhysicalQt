@@ -1,5 +1,9 @@
 # **PhysicalQt**
 
+## Hardware requirements
+- Webcam
+- A GPU with cuda support
+
 #### Docker Guide
     docker pull tensorflow/tensorflow
 #### Setup
