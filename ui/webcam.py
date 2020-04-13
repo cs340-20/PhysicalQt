@@ -108,6 +108,14 @@ class MainWindow(QWidget):
         self.end.setGeometry(QRect(200, 350, 150, 60))
         self.end.clicked.connect(lambda: self.switch_status())
 
+        self.option_menu = QComboBox(self)
+        self.option_menu.addItem("jumping jack")
+        self.option_menu.addItem("Jump Squat")
+        self.option_menu.addItem("Lunge")
+        self.option_menu.addItem("Star jumps")
+        self.option_menu.addItem("Standing Side Stretch")
+        self.option_menu.setGeometry(QRect(550, 350, 150, 60))
+
         timer = QTimer(self)
         timer.setInterval(int(1000/fps))
         timer.timeout.connect(self.get_frame)
