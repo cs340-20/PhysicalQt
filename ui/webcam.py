@@ -109,11 +109,9 @@ class MainWindow(QWidget):
         self.end.clicked.connect(lambda: self.switch_status())
 
         self.option_menu = QComboBox(self)
-        self.option_menu.addItem("jumping jack")
-        self.option_menu.addItem("Jump Squat")
-        self.option_menu.addItem("Lunge")
-        self.option_menu.addItem("Star jumps")
-        self.option_menu.addItem("Standing Side Stretch")
+        self.options = ["jumping jack", "Jump Squat", "Lunge", "Star jumps", "Standing Side Stretch"]
+        for op in self.options:
+            self.option_menu.addItem(op)
         self.option_menu.setGeometry(QRect(550, 350, 150, 60))
 
         timer = QTimer(self)
