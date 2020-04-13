@@ -5,7 +5,7 @@
 #### Setup
     sh tf_webcam_docker.sh setup
 #### Run
-    sh tf_docker.sh run
+    sh tf_webcam_docker.sh run
 #### Inside PhysicalQt directory, install required packages
     sh setup.sh
 #### Have fun
