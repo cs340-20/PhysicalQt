@@ -102,11 +102,11 @@ class MainWindow(QWidget):
         #text.setGeometry(QRect(35, 350, 36, 355))
         self.startb = QPushButton("Start Tracking", self)
         self.startb.setGeometry(QRect(50, 350, 150, 60))
-        self.startb.clicked.connect(lambda: self.switch_status())
+        self.startb.clicked.connect(lambda: self.switch_on())
 
         self.end = QPushButton("Stop Tracking", self)
         self.end.setGeometry(QRect(200, 350, 150, 60))
-        self.end.clicked.connect(lambda: self.switch_status())
+        self.end.clicked.connect(lambda: self.switch_off())
 
         self.option_menu = QComboBox(self)
         self.options = ["jumping jack", "Jump Squat", "Lunge", "Star jumps", "Standing Side Stretch"]
@@ -118,6 +118,12 @@ class MainWindow(QWidget):
         timer.setInterval(int(1000/fps))
         timer.timeout.connect(self.get_frame)
         timer.start()
+
+    def switch_on(self):
+        self.mainStatus = 1
+
+    def switch_off(self):
+        self.mainStatus = 0
 
     def switch_status(self):
         self.mainStatus = not self.mainStatus
@@ -145,7 +151,9 @@ class MainWindow(QWidget):
 
         self.image2.setScaledContents(True)
 
-app = QApplication([])
-win = MainWindow()
-win.show()
-app.exec()
+
+if __name__ == "__main__":
+    app = QApplication([])
+    win = MainWindow()
+    win.show()
+    app.exec()
