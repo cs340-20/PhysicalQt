@@ -27,8 +27,14 @@ def infer(imgMatrix):
             feed_dict={'image:0': input_image}
             )
     
+    '''
+    pose_score, keypoint_score, keypoint_coord = posenet.decode_pose(
+                
+                output_stride            
+            )
+    '''
+
     pose_scores, keypoint_scores, keypoint_coords=posenet.decode_multiple_poses(
-    #pose_scores, keypoint_scores, keypoint_coords=posenet.decode_poses(
             heatmaps_result.squeeze(axis=0),
             offsets_result.squeeze(axis=0),
             displacement_fwd_result.squeeze(axis=0),

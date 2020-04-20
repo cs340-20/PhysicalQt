@@ -3,6 +3,7 @@ import csv
 from net import constants
 import json
 import math
+from copy import deepcopy as copy
 
 def generateGT(poseMasterObj, exerciseName, exerciseID, meta=None):
     masterOut = []
@@ -35,7 +36,7 @@ def packageCoordinateSetNormalized(rawCoordScores, rawCoordPoints, image_size):
     setmate = packageCoordinateSet(rawCoordScores, rawCoordPoints)
     newmate = {}
     for part in setmate.items():
-        newmate[part[0]] = (-1, part[1][0], [part[1][1][0]/width, part[1][1][1]/height])
+        newmate[part[0]] = [-1, part[1][0], [part[1][1][0]/width, part[1][1][1]/height]]
     return newmate
 
 def gen_bounding_box(frame, ratio_w=1, ratio_h=1, raw=False):
@@ -84,14 +85,17 @@ def get_bbx_diagonal(coord_box):
     return math.sqrt((h_x-l_x)**2+(h_y-l_y)**2)
 
 # fix the scaling issue based on bounding box:
-def scale_pose(bbox1, bbox2, pose1, pose2):
+def scale_pose(bbox1, bbox2, p1, p2):
+    pose1 = copy(p1)
+    pose2 = copy(p2)
+
     # bbox1 -> box
     # figure out scaling factor:
     # figure out diagonals of each box and divide bbox2/bbox1:
     diagonal1 = get_bbx_diagonal(bbox1)
     diagonal2 = get_bbx_diagonal(bbox2)
-    print("diagonals: ",diagonal1, diagonal2)
-    
+    #print("diagonals: ",diagonal1, diagonal2)
+
     scale_factor = diagonal1/diagonal2
     for joint in pose2.items():
         coord = joint[1][2]
@@ -99,18 +103,22 @@ def scale_pose(bbox1, bbox2, pose1, pose2):
         _temp = [coord[0]*scale_factor, coord[1]*scale_factor]
         pose2[joint[0]][2] = _temp
 
-    print("sf", scale_factor)
+    #print("sf", scale_factor)
+    return pose2
 
-def bind_pose_loc(pose1, pose2):
-    # transformation of pose2 to anchor at pose1's [tbd joint]
+def bind_pose_loc(p1, p2):
+    # transformation of pose2 to anchor at pose1's [leftAnkle joint]
     # i'm thinking left ankle
-    p1_left_ankle = pose1['leftAnkle']
-    p2_left_ankle = pose2['leftAnkle']
+    pose1 = copy(p1)
+    pose2 = copy(p2)
+
+    p1_left_ankle = pose1['rightAnkle']
+    p2_left_ankle = pose2['rightAnkle']
     init_dist_x = p1_left_ankle[2][0] - p2_left_ankle[2][0]
     init_dist_y = p1_left_ankle[2][1] - p2_left_ankle[2][1]
 
     # get offsets based on p2_left_ankle
-    # offset - {'joint_name': [x_offset, y_offset]}
+    # offset = {'joint_name': [x_offset, y_offset]}
     offsets = {joint[0]:[p2_left_ankle[2][0]-joint[1][2][0], p2_left_ankle[2][1]-joint[1][2][1]] for joint in pose2.items()}
     
     # change joints based on offsets:
@@ -128,4 +136,6 @@ def bind_pose_loc(pose1, pose2):
                         p1_left_ankle[2][1]-offset[1][1]
                     ]
                 ]
+
+    #print("out:", export_pose2['rightAnkle'], p1['rightAnkle'])
     return export_pose2

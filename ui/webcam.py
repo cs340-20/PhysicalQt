@@ -9,7 +9,7 @@ import os
 sys.path.append('../posenet/core/')
 import gt_interpreter as gt
 import infer
-from utils import packageCoordinateSetNormalized, gen_bounding_box, get_bbx_size
+from utils import packageCoordinateSetNormalized, gen_bounding_box, get_bbx_size, scale_pose, bind_pose_loc, normalization_fix
 
 def get_qimage(image):
     height, width, channels = image.shape
@@ -40,26 +40,35 @@ class DetectionWidget(QWidget, QRunnable):
         if self.gt != None:
             inst_item = self.gt[self.lastGoodFrame]
             for joint in inst_item.items():
-                #true_size =
-                true_size = (int(joint[1][2][1]*(width/1.5)), int(joint[1][2][0]*(height/2) + (height/3)))
+                true_size = normalization_fix(joint[1][2], width, height)
+                #true_size = (int(joint[1][2][1]*(width/1.5)), int(joint[1][2][0]*(height/2) + (height/3)))
                 cv2.circle(gt_img, true_size, 5, (0,0,255), -1)
 
 
     @pyqtSlot()
     def gen_output_pose(self, input_img, output_img):
+        width, height, _ = output_img.shape
+
         # replace late if detect_pose isn't needed:
         pose_pack = self.detect_pose(input_img)
 
         # generate bounding box size to figure out centering:
         # use self.gt to access the ground truths:
 
-        #get_bbx_size(gen_bounding_box(pose_pack, ratio_w=new_img_w, ratio_h=new_img_h))
-        #coord = gen_bounding_box(pose_pack, ratio_w=new_img_w, ratio_h=new_img_h)
+        gt = self.gt[self.lastGoodFrame]
+        posenet_bbox = gen_bounding_box(pose_pack, ratio_w=width, ratio_h=height)
+        gt_bbox = gen_bounding_box(gt, ratio_w=width, ratio_h=height)
+
+        coord1, coord2 = posenet_bbox[0], posenet_bbox[1]
+
+        scale_out = scale_pose(gt_bbox, posenet_bbox, gt, pose_pack)
+        new_pose = bind_pose_loc(gt, scale_out)
+        #new_pose = bind_pose_loc(gt, pose_pack)
 
         # draw on blank canvas:
-        width, height, _ = output_img.shape
-        for joint in pose_pack.items():
-            true_size = (int(joint[1][2][1]*(width)), int(joint[1][2][0]*(height/2)+(height/3)))
+        for joint in new_pose.items():
+            #true_size = (int(joint[1][2][1]*(width)), int(joint[1][2][0]*(height/2)+(height/3)))
+            true_size = normalization_fix(joint[1][2], width, height)
             cv2.circle(output_img, true_size, 3, (0,0,0), -1)
         
         self.pose_output = get_qimage(output_img)
@@ -107,8 +116,9 @@ class MainWindow(QWidget):
         text = QLabel('motion', self)
         text.setGeometry(QRect(550, 5, 50, 25))
 
-        statusText = QLabel('Wrong movement detected', self)
-        statusText.setGeometry(QRect(550,320,500,100))
+        self.status = False
+        self.statusText = QLabel('Wrong movement detected', self)
+        self.statusText.setGeometry(QRect(550,320,500,100))
         
         numText = QLabel('# of exercises done: 0', self)
         numText.setGeometry(QRect(550,300,600,100))
@@ -171,7 +181,11 @@ class MainWindow(QWidget):
 
             # Continously check pose:
             for i in range(len(self.gt_master[0])):
-                gt.evaluate(self.detectWidget.current_pose, self.gt_master[0][i])
+                self.status = gt.evaluate(self.detectWidget.current_pose, self.gt_master[0][i])
+                if self.status:
+                    self.statusText.setText('Wrong movement detected')
+                else:
+                    self.statusText.setText('Correct movement detected') # add frames
 
         image = QImage(frame, *frame.shape[1::-1], QImage.Format_RGB888).rgbSwapped()
         pixmap = QPixmap.fromImage(image)
