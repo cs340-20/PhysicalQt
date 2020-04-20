@@ -197,7 +197,11 @@ class MainWindow(QWidget):
         self.image.setScaledContents(True)
 
         if self.mainStatus:
-            self.image2.setPixmap(QPixmap.fromImage(get_qimage(img_viz)))
+            pixmap = QPixmap.fromImage(get_qimage(img_viz))
+            pixmap = pixmap.transformed(QTransform().scale(-1, 1))
+            #pixmap = pixmap.copy(QRect(120, 200, 150, 300))
+            self.image2.setPixmap(pixmap)
+            #self.image2.setPixmap(QPixmap.fromImage(get_qimage(img_viz)))
         else:
             self.image2.setPixmap(QPixmap.fromImage(get_qimage(self.template_needstart)))
 
