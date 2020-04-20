@@ -20,10 +20,11 @@ def get_qimage(image):
 
 
 class DetectionWidget(QWidget, QRunnable):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, gt=None):
+        # don't store images in class objects
         super().__init__(parent)
-        self.pose_output = QImage()
-        self.current_pose = None
+        self.gt = gt
+        self.current_pose = None # coordinates
         self.lastGoodFrame = 0
 
     def detect_pose(self, img):
@@ -32,29 +33,36 @@ class DetectionWidget(QWidget, QRunnable):
         self.current_pose = _out
         return _out
 
+    def draw_gt(self, gt_img):
+        # try doing this multithreaded to make the gt not laggy with the model:
+        # draw gt:
+        width, height, _ = gt_img.shape
+        if self.gt != None:
+            inst_item = self.gt[self.lastGoodFrame]
+            for joint in inst_item.items():
+                #true_size =
+                true_size = (int(joint[1][2][1]*(width/1.5)), int(joint[1][2][0]*(height/2) + (height/3)))
+                cv2.circle(gt_img, true_size, 5, (0,0,255), -1)
+
+
     @pyqtSlot()
-    def gen_data(self, new_img_w, new_img_h, img, gt_item=None):
+    def gen_output_pose(self, input_img, output_img):
         # replace late if detect_pose isn't needed:
-        pose_pack = self.detect_pose(img)
-        img_blank = np.full((new_img_w,new_img_h, 3), 239, dtype=np.uint8)
+        pose_pack = self.detect_pose(input_img)
 
         # generate bounding box size to figure out centering:
+        # use self.gt to access the ground truths:
+
         #get_bbx_size(gen_bounding_box(pose_pack, ratio_w=new_img_w, ratio_h=new_img_h))
         #coord = gen_bounding_box(pose_pack, ratio_w=new_img_w, ratio_h=new_img_h)
 
-        # draw gt:
-        if gt_item != None:
-            inst_item = gt_item[self.lastGoodFrame]
-            for joint in inst_item.items():
-                #true_size =
-                true_size = (int(joint[1][2][1]*(new_img_w/1.5)), int(joint[1][2][0]*(new_img_h/2) + (new_img_h/3)))
-                cv2.circle(img_blank, true_size, 5, (0,0,255), -1)
-
         # draw on blank canvas:
+        width, height, _ = output_img.shape
         for joint in pose_pack.items():
-            true_size = (int(joint[1][2][1]*(new_img_w)), int(joint[1][2][0]*(new_img_h/2)+(new_img_h/3)))
-            cv2.circle(img_blank, true_size, 3, (0,0,0), -1)
-        self.pose_output = get_qimage(img_blank)
+            true_size = (int(joint[1][2][1]*(width)), int(joint[1][2][0]*(height/2)+(height/3)))
+            cv2.circle(output_img, true_size, 3, (0,0,0), -1)
+        
+        self.pose_output = get_qimage(output_img)
         if self.pose_output.size() != self.size():
             self.setFixedSize(self.pose_output.size())
         self.update()
@@ -62,17 +70,23 @@ class DetectionWidget(QWidget, QRunnable):
 class MainWindow(QWidget):
     def __init__(self, camera_index=0, fps=24):
         super().__init__()
-        #self.threadpool = QThreadPool()
+
+        # threadpool setup for multi-threading:
+        self.threadpool = QThreadPool()
+
+        # set window size and video stream:
         self.mainStatus = False
         self.setFixedSize(900, 500)
-        #self.setFixedSize(1050, 800)
         self.setWindowTitle('PhysicalQt')
-        self.capture = cv2.VideoCapture(camera_index)
+
+        try:
+            self.capture = cv2.VideoCapture(camera_index)
+        except Exception as e:
+            print("Error with getting webcamera feed!")
 
         # template load in:
         static_path = os.path.join(os.getcwd(), 'static')
         self.template_needstart = cv2.imread(os.path.join(static_path, 'template_needstart.png'))
-
         self.image = QLabel(self)
         self.image.setGeometry(QRect(35, 35, 450, 300))
 
@@ -80,15 +94,24 @@ class MainWindow(QWidget):
         self.image2 = QLabel(self)
         self.image2.setGeometry(QRect(550, 35, 300, 300))
 
-        self.detectWidget = DetectionWidget()
-        #self.threadpool.start(self.detectWidget)
         # load gt file manually here:
         self.gt_master, self.meta = gt.read_in_gt('../posenet/gt/jumping_jack/jumping_jack_02.json')
 
+        # create main output feed:
+        self.detectWidget = DetectionWidget(gt=self.gt_master[0])
+    
+        # load in other GUI elements:
         text = QLabel('webcam', self)
         text.setGeometry(QRect(35, 5, 50, 25))
+
         text = QLabel('motion', self)
         text.setGeometry(QRect(550, 5, 50, 25))
+
+        statusText = QLabel('Wrong movement detected', self)
+        statusText.setGeometry(QRect(550,320,500,100))
+        
+        numText = QLabel('# of exercises done: 0', self)
+        numText.setGeometry(QRect(550,300,600,100))
 
         #layout = QVBoxLayout(self)
         '''
@@ -100,6 +123,8 @@ class MainWindow(QWidget):
         '''
         #text = QLabel('button', self)
         #text.setGeometry(QRect(35, 350, 36, 355))
+        
+        # Add button and button functionality
         self.startb = QPushButton("Start Tracking", self)
         self.startb.setGeometry(QRect(50, 350, 150, 60))
         self.startb.clicked.connect(lambda: self.switch_on())
@@ -114,6 +139,7 @@ class MainWindow(QWidget):
             self.option_menu.addItem(op)
         self.option_menu.setGeometry(QRect(350, 350, 150, 60))
 
+        # timer to launch interactivity:
         timer = QTimer(self)
         timer.setInterval(int(1000/fps))
         timer.timeout.connect(self.get_frame)
@@ -130,10 +156,18 @@ class MainWindow(QWidget):
 
     def get_frame(self):
         _, frame = self.capture.read()
-
+        img_viz = None
         if self.mainStatus:
             self.detectWidget.lastGoodFrame = (self.detectWidget.lastGoodFrame + 1) % self.meta[0]['meta']['total_frames']
-            self.detectWidget.gen_data(300,300,frame, gt_item=self.gt_master[0])
+            # img_viz -> output of everything being done
+            img_viz = np.full((300,300, 3), 239, dtype=np.uint8)
+
+            # ask threadpool to execute this a seperate thread:
+            self.detectWidget.gen_output_pose(frame, img_viz)
+            
+            # ask threadpool to execute this as a seperate thread:
+            # draw gt:
+            self.detectWidget.draw_gt(img_viz)
 
             # Continously check pose:
             for i in range(len(self.gt_master[0])):
@@ -145,7 +179,7 @@ class MainWindow(QWidget):
         self.image.setScaledContents(True)
 
         if self.mainStatus:
-            self.image2.setPixmap(QPixmap.fromImage(self.detectWidget.pose_output))
+            self.image2.setPixmap(QPixmap.fromImage(get_qimage(img_viz)))
         else:
             self.image2.setPixmap(QPixmap.fromImage(get_qimage(self.template_needstart)))
 

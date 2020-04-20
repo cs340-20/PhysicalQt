@@ -8,7 +8,6 @@ import utils
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
 sess = tf.Session(config=config)
-print("\n\n-----------\nTensorflow Session Created\n------------\n\n")
 
 try:
     os.getcwd().index('posenet')
@@ -21,7 +20,7 @@ output_stride = model_cfg['output_stride']
 
 def infer(imgMatrix):
     input_image, draw_image, output_scale = posenet.read_imgfile(
-            imgMatrix, scale_factor=1.0, output_stride=output_stride)
+            imgMatrix, scale_factor=0.5, output_stride=output_stride)
 
     heatmaps_result, offsets_result, displacement_fwd_result, displacement_bwd_result = sess.run(
             model_outputs,
