@@ -6,6 +6,8 @@ import sys
 import numpy as np
 import os
 
+import threading
+
 sys.path.append('../posenet/core/')
 import gt_interpreter as gt
 import infer
@@ -70,7 +72,7 @@ class DetectionWidget(QWidget, QRunnable):
             #true_size = (int(joint[1][2][1]*(width)), int(joint[1][2][0]*(height/2)+(height/3)))
             true_size = normalization_fix(joint[1][2], width, height)
             cv2.circle(output_img, true_size, 3, (0,0,0), -1)
-        
+
         self.pose_output = get_qimage(output_img)
         if self.pose_output.size() != self.size():
             self.setFixedSize(self.pose_output.size())
@@ -108,7 +110,7 @@ class MainWindow(QWidget):
 
         # create main output feed:
         self.detectWidget = DetectionWidget(gt=self.gt_master[0])
-    
+
         # load in other GUI elements:
         text = QLabel('webcam', self)
         text.setGeometry(QRect(35, 5, 50, 25))
@@ -119,7 +121,7 @@ class MainWindow(QWidget):
         self.status = False
         self.statusText = QLabel('Wrong movement detected', self)
         self.statusText.setGeometry(QRect(550,320,500,100))
-        
+
         numText = QLabel('# of exercises done: 0', self)
         numText.setGeometry(QRect(550,300,600,100))
 
@@ -133,7 +135,7 @@ class MainWindow(QWidget):
         '''
         #text = QLabel('button', self)
         #text.setGeometry(QRect(35, 350, 36, 355))
-        
+
         # Add button and button functionality
         self.startb = QPushButton("Start Tracking", self)
         self.startb.setGeometry(QRect(50, 350, 150, 60))
@@ -174,10 +176,12 @@ class MainWindow(QWidget):
 
             # ask threadpool to execute this a seperate thread:
             self.detectWidget.gen_output_pose(frame, img_viz)
-            
+
             # ask threadpool to execute this as a seperate thread:
             # draw gt:
-            self.detectWidget.draw_gt(img_viz)
+            #self.detectWidget.draw_gt(img_viz)
+            gt_thread = threading.Thread(target=self.detectWidget.draw_gt, args=(img_viz,), daemon=True)
+            gt_thread.start()
 
             # Continously check pose:
             for i in range(len(self.gt_master[0])):
