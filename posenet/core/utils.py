@@ -22,7 +22,7 @@ def generateGT(poseMasterObj, exerciseName, exerciseID, meta=None):
             masterOut.append(setmate)
 
         jsonOutput = json.dumps(masterOut, indent=4)
-        jsonFile.write(jsonOutput) 
+        jsonFile.write(jsonOutput)
 
 def packageCoordinateSet(rawCoordScores, rawCoordPoints):
     setmate = {}
@@ -41,7 +41,7 @@ def packageCoordinateSetNormalized(rawCoordScores, rawCoordPoints, image_size):
 
 def gen_bounding_box(frame, ratio_w=1, ratio_h=1, raw=False):
     l_x, l_y, s_x, s_y = 0,0,1_000_000, 1_000_000
-    
+
     for joint in frame.items():
         coord = joint[1][2]
         if l_x < coord[0]:
@@ -57,7 +57,7 @@ def gen_bounding_box(frame, ratio_w=1, ratio_h=1, raw=False):
         return [(s_x, s_y),(l_x, l_y)]
     else:
         return [(s_x*ratio_w, s_y*ratio_h), (l_x*ratio_w, l_y*ratio_h)]
-    
+
 def circle_equation(x,y,radius, x_offset, y_offset, name=""):
     output_val = ((x-x_offset)**2)+((y-y_offset)**2)
     print("try radius: ", name, output_val, radius**2, output_val <= radius**2)
@@ -95,8 +95,10 @@ def scale_pose(bbox1, bbox2, p1, p2):
     diagonal1 = get_bbx_diagonal(bbox1)
     diagonal2 = get_bbx_diagonal(bbox2)
     #print("diagonals: ",diagonal1, diagonal2)
-
-    scale_factor = diagonal1/diagonal2
+    try:
+        scale_factor = diagonal1/diagonal2
+    except:
+        scale_factor = 0
     for joint in pose2.items():
         coord = joint[1][2]
         #[x, y]
@@ -120,7 +122,7 @@ def bind_pose_loc(p1, p2):
     # get offsets based on p2_left_ankle
     # offset = {'joint_name': [x_offset, y_offset]}
     offsets = {joint[0]:[p2_left_ankle[2][0]-joint[1][2][0], p2_left_ankle[2][1]-joint[1][2][1]] for joint in pose2.items()}
-    
+
     # change joints based on offsets:
     # set pose2's left ankle to pose1's
     #pose2['leftAnkle'][2] = pose1['leftAnkle'][2]
