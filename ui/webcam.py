@@ -188,7 +188,8 @@ class MainWindow(QWidget):
             # Continously check pose:
             for i in range(len(self.gt_master[0])):
                 self.status = gt.evaluate(self.detectWidget.current_pose, self.gt_master[0][i])
-                if self.status:
+                #print("status: ", self.status)
+                if bool(self.status) == False:
                     self.statusText.setText('Wrong movement detected')
                 else:
                     self.statusText.setText('Correct movement detected') # add frames

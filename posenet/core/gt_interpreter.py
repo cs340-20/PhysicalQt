@@ -39,9 +39,9 @@ def average_pose(gt_frame, exercise_name):
                 gt[x][2][0] = gt[x][2][0]/meta_blocks[z]['meta']['size'][0]
                 gt[x][2][1] = gt[x][2][1]/meta_blocks[z]['meta']['size'][1]
 
-def evaluate(input_frame, avg_gt, threshold=len(constants.PART_NAMES)-0):
+def evaluate(input_frame, avg_gt, threshold=len(constants.PART_NAMES)-4):
     # single tolerance for each joint (change later for more specific tolerance load
-    tol_rad = 0.001
+    tol_rad = 0.1
     total_score = 0
     total_parts = len(constants.PART_NAMES)
     achieve_score = threshold/total_parts
@@ -64,7 +64,7 @@ def evaluate(input_frame, avg_gt, threshold=len(constants.PART_NAMES)-0):
         if distance <= tol_rad:
             total_score += 1 
 
-    #print("total joint score: ", total_score)
+    #print("total joint score: ", total_score, total_score/total_parts, achieve_score)
     if total_score/total_parts > achieve_score:
         return 1
     else:
