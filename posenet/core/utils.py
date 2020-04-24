@@ -70,7 +70,7 @@ def normalization_shift(coordinate, side_x, side_y):
     return (int(coordinate[1]*(side_x/1.5)), int(coordinate[0]*(side_y/1.5))+int(side_y/1.5))
 
 def normalization_fix(coordinate, side_x, side_y):
-    return (int(coordinate[1]*(side_x/2)), int(coordinate[0]*(side_y/2))+int(side_y/2))
+    return (int(coordinate[1]*(side_x)), int((coordinate[0]*(side_y/3) * 3)))
 
 # use with gen_bounding_box:
 def get_bbx_size(coord_box):

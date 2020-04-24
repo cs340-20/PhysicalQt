@@ -180,9 +180,11 @@ class MainWindow(QWidget):
             # ask threadpool to execute this as a seperate thread:
             # draw gt:
             #self.detectWidget.draw_gt(img_viz)
+            '''
             gt_thread = threading.Thread(target=self.detectWidget.draw_gt, args=(img_viz,), daemon=True)
             gt_thread.start()
-
+            '''
+            self.detectWidget.draw_gt(img_viz)
             # Continously check pose:
             for i in range(len(self.gt_master[0])):
                 self.status = gt.evaluate(self.detectWidget.current_pose, self.gt_master[0][i])
@@ -198,8 +200,8 @@ class MainWindow(QWidget):
 
         if self.mainStatus:
             pixmap = QPixmap.fromImage(get_qimage(img_viz))
-            pixmap = pixmap.transformed(QTransform().scale(-1, 1))
-            pixmap = pixmap.copy(QRect(155, 155, 250, 250))
+            #pixmap = pixmap.transformed(QTransform().scale(-1, 1))
+            #pixmap = pixmap.copy(QRect(155, 155, 250, 250))
             self.image2.setPixmap(pixmap)
             #self.image2.setPixmap(QPixmap.fromImage(get_qimage(img_viz)))
         else:
