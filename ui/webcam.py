@@ -201,7 +201,7 @@ class MainWindow(QWidget):
 
         if self.mainStatus:
             pixmap = QPixmap.fromImage(get_qimage(img_viz))
-            pixmap = pixmap.transformed(QTransform().scale(-1, 1))
+            #pixmap = pixmap.transformed(QTransform().scale(-1, 1))
             #pixmap = pixmap.copy(QRect(155, 155, 250, 250))
             self.image2.setPixmap(pixmap)
             #self.image2.setPixmap(QPixmap.fromImage(get_qimage(img_viz)))
